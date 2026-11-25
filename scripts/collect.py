@@ -95,6 +95,11 @@ def etapas_de(spec):
     return [s for c in spec.get("cards", []) for s in c.get("steps", [])]
 
 
+def sem_aviso(meta):
+    """A anotação escrita à mão, sem os avisos que a própria junção torna falsos ("lido no código · pode falhar" → "pode falhar")."""
+    return " · ".join(p for p in str(meta or "").split(" · ") if p not in (LIDO, NAO_RODOU))
+
+
 def ligar_pelo_nome(base, chaves):
     """Etapa escrita à mão sem 'ci' ganha a ligação quando o nome é igual ao de um passo e não há dúvida dos dois lados."""
     ligadas = {k for s in etapas_de(base) for k in s.get("ci", [])}
@@ -127,11 +132,14 @@ def fundir(base, novo, hoje=None):
             s["seconds"], s["status"] = tempo, "failed" if ruim else None
             s["metrics"] = [{"auto": True, "when": f"execução de {origem[rotina]['date']} · {rotina}",
                              "values": [[f"{tempo:.0f} s", "duração"], ["falhou" if ruim else "sem erro", "resultado"]]}] + resto
-            if s.get("meta") in (LIDO, NAO_RODOU):
-                del s["meta"]
+            anotacao = sem_aviso(s.get("meta"))
+            if anotacao:
+                s["meta"] = anotacao
+            else:
+                s.pop("meta", None)
         elif any(k.split(SEP, 1)[0] in origem for k in chaves):  # a rotina dela foi lida e o passo não veio
             s.pop("seconds", None)
-            s["status"], s["meta"] = None, NAO_RODOU
+            s["status"], s["meta"] = None, " · ".join(x for x in (NAO_RODOU, sem_aviso(s.get("meta"))) if x)
             s["metrics"] = resto
     dono = {}
     for s in etapas_de(spec):

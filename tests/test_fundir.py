@@ -53,7 +53,17 @@ class Fundir(unittest.TestCase):
         antes, _ = collect.fundir(BASE, coleta({"Diária": (2, [passo("Coleta", 60), passo("Publica", 30)])}))
         depois, _ = collect.fundir(antes, coleta({"Diária": (3, [passo("Coleta", 61)])}))
         pub = collect.etapas_de(depois)[1]
-        self.assertEqual((pub.get("seconds"), pub["meta"]), (None, collect.NAO_RODOU))
+        self.assertEqual((pub.get("seconds"), pub["meta"]), (None, f"{collect.NAO_RODOU} · texto meu"))
+
+    def test_anotacao_a_mao_sobrevive_e_o_aviso_falso_sai(self):
+        base = json.loads(json.dumps(BASE))
+        base["cards"][1]["steps"][0]["meta"] = "lido no código · pode falhar"
+        mediu, _ = collect.fundir(base, coleta({"Diária": (2, [passo("Publica", 30)])}))
+        self.assertEqual(collect.etapas_de(mediu)[1]["meta"], "pode falhar")
+        sumiu, _ = collect.fundir(mediu, coleta({"Diária": (3, [passo("Coleta", 1)])}))
+        self.assertEqual(collect.etapas_de(sumiu)[1]["meta"], f"{collect.NAO_RODOU} · pode falhar")
+        voltou, _ = collect.fundir(sumiu, coleta({"Diária": (4, [passo("Publica", 9)])}))
+        self.assertEqual(collect.etapas_de(voltou)[1]["meta"], "pode falhar")
 
     def test_rotina_que_nao_veio_fica_como_estava_e_a_mais_nova_vale(self):
         duas = coleta({"Diária": (2, [passo("Publica", 30)]), "Semanal": (5, [passo("Publica", 99)])})

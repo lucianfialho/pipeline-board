@@ -39,7 +39,7 @@ SPEC.cards.forEach(c => {
     const b = btn(null, () => openStep(s.id), "step" + (s.status === "failed" ? " bad" : ""));
     b.dataset.step = s.id;
     const ic = $("span", "ic"), img = $("img"); img.src = ICONS[s.icon] || ICONS.file; img.alt = ""; img.draggable = false; ic.append(img);
-    const tx = $("span", "tx"); tx.append($("b", null, s.name), $("small", null, s.meta || dur(s.seconds)));
+    const tx = $("span", "tx"); tx.append($("b", null, s.name), $("small", null, [dur(s.seconds), s.meta].filter(Boolean).join(" · ")));
     if (s.writes) tx.append($("small", "out", "→ " + s.writes));
     b.append(ic, tx);
     const found = findingsOf(s.id), sure = found.filter(f => f.status === "confirmed").length;
