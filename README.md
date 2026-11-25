@@ -1,86 +1,96 @@
 # pipeline-board
 
-**Veja, entenda e acelere o seu pipeline.** Um plugin do Claude Code que transforma as execuções reais num quadro interativo e publica no **seu artefato**, sem você precisar montar nada.
+**See, understand and speed up your pipeline.** A plugin for **Claude Code** that turns your real runs into an interactive board and publishes it to **your own artifact**.
 
-![Demonstração: arrastar cartões, abrir uma etapa, buscar, repetir uma execução até a falha, ver limites e relatório](docs/demo.gif)
+![Works with Claude Code](https://img.shields.io/badge/works%20with-Claude%20Code-d97757)
 
-[Vídeo em MP4](docs/demo.mp4) · o pipeline do vídeo é **fictício**.
+![Demo: dragging cards, opening a step, searching, replaying a run until it fails, checking limits and the report](docs/demo.gif)
 
-## Instalar
+[MP4 video](docs/demo.mp4) · The pipeline in the demo is **made up**. The board labels and video captions are in Portuguese.
+
+## Works with Claude Code
+
+Installing from this repository was checked with **Claude Code 2.1.332** on macOS: the marketplace was added, the plugin installed and all 4 skills were listed. The guided flows inside each skill have not been run end to end in a fresh session yet.
+
+## Install
+
+Inside Claude Code:
 
 ```
 /plugin marketplace add molholabs/pipeline-board
 /plugin install pipeline-board@pipeline-board
 ```
 
-O repositório é privado: quem instala precisa de acesso a ele no GitHub. Para experimentar numa sessão a partir de uma cópia local: `claude --plugin-dir <pasta>`.
+This repository is private, so you need access to it on GitHub. To try a local copy for one session: `claude --plugin-dir <folder>`.
 
-Precisa de Python 3.9+ e, para ler as execuções, da CLI [`gh`](https://cli.github.com/) autenticada.
+Requirements: Python 3.9+ and, to read your runs, an authenticated [`gh`](https://cli.github.com/) CLI. Publishing to an artifact needs a Claude account where artifacts are available. The scripts also work without it and produce a local HTML file.
 
-## Usar
+## Use
 
-Abra o Claude Code no seu repositório e peça:
+Open Claude Code in your repository and ask:
 
-> desenha o meu pipeline
+> draw my pipeline
 
-| Skill | Quando usar | O que faz |
+The skill instructions are written in Portuguese. They tell Claude to answer in your language.
+
+| Skill | Ask when | What it does |
 |---|---|---|
-| `/pipeline-board:map` | "desenha o meu pipeline" | Lê as execuções do GitHub Actions, organiza em cartões, confere e publica no artefato |
-| `/pipeline-board:explain` | "o que essa etapa faz?" | Lê o código e preenche fluxo, medidas, **casos reais**, últimos registros e modelos usados |
-| `/pipeline-board:speedup` | "isso está lento" ou "quebrou" | Acha o limite verdadeiro, paraleliza no código e **mede antes e depois** |
-| `/pipeline-board:limits` | "quanto falta para estourar?" | Minutos de CI, tempo máximo do job, cache e arquivos por publicação |
+| `/pipeline-board:map` | "draw my pipeline" | Reads GitHub Actions runs, groups them into cards, scans for secrets and publishes to your artifact |
+| `/pipeline-board:explain` | "what does this step do?" | Reads your code and fills in the flow, measurements, **real examples**, latest records and models used |
+| `/pipeline-board:speedup` | "this is slow" or "this broke" | Finds the actual bottleneck, parallelizes in code and **measures before and after** |
+| `/pipeline-board:limits` | "how close are we to a limit?" | CI minutes, job timeout, cache and files per deploy |
 
-## O que o quadro faz
+## What the board does
 
-![Visão geral do quadro](docs/quadro.png)
+![Board overview](docs/quadro.png)
 
-- **Canvas sem fim.** Arraste, aproxime com pinça ou ⌘/Ctrl + rolagem, mova os cartões e mude a largura: as etapas se reorganizam e as setas se redesenham. **Arrumar** volta ao layout automático.
-- **Cada etapa por dentro.** Fluxo com repetições, paralelismo e decisões; medidas; caso real; últimos registros; arquivo onde grava.
-- **Replay.** Uma execução real passa em segundos, com relógio, e para onde quebrou.
-- **Busca** (`/` ou ⌘K) em nomes, arquivos, fluxos e casos.
-- **Copiar contexto.** Um clique copia a etapa em texto para colar no Claude e pedir a correção.
-- **Perguntar.** Dentro de um artefato, uma pergunta monta a resposta com blocos. O modelo escolhe os blocos e pode escrever frases curtas, marcadas como do modelo; gráficos e listas saem dos dados do quadro.
-- **Limites** com aviso a partir de 80%. Sem dado aparece "não medido", nunca zero.
+- **Infinite canvas.** Drag to pan, pinch or ⌘/Ctrl + scroll to zoom, move cards and resize them: steps reflow and arrows redraw. One button restores the auto layout.
+- **Inside each step.** Flow with loops, parallelism and decisions; measurements; a real example; latest records; where it writes.
+- **Replay.** A run plays back in seconds, with a clock, and stops where it broke.
+- **Search** (`/` or ⌘K) across names, files, flows and examples.
+- **Copy context.** One click copies a step as text, ready to paste into Claude and ask for a fix.
+- **Ask.** Inside an artifact, a question builds an answer out of blocks. The model picks the blocks and may write short sentences, labeled as model-written. Charts and lists come from the board data.
+- **Limits** with a warning from 80%. Missing data shows as not measured, never as zero.
 
-![Uma etapa aberta](docs/etapa.png)
+![An open step](docs/etapa.png)
 
-![Painel de limites](docs/limites.png)
+![Limits panel](docs/limites.png)
 
-## Sem o Claude
+## Without Claude
 
 ```bash
-python3 scripts/collect.py dono/repo -o spec.json     # rascunho a partir das execuções
-python3 scripts/limits.py dono/repo --spec spec.json  # limites
-python3 scripts/check.py spec.json                    # procura segredos antes de publicar
-python3 scripts/build.py spec.json -o board.html      # um HTML só, abre em qualquer navegador
+python3 scripts/collect.py owner/repo -o spec.json     # first draft from your runs
+python3 scripts/limits.py owner/repo --spec spec.json  # limits
+python3 scripts/check.py spec.json                     # look for secrets before publishing
+python3 scripts/build.py spec.json -o board.html       # a single HTML file, opens in a browser
 ```
 
-O formato da descrição está em [references/spec.md](references/spec.md), com um exemplo em [examples/demo.spec.json](examples/demo.spec.json).
+The spec format is described in [references/spec.md](references/spec.md) (in Portuguese), with an example in [examples/demo.spec.json](examples/demo.spec.json).
 
-## Cuidados
+## Before you share
 
-- O quadro mostra nomes de rotinas, arquivos, falhas e registros. **O artefato nasce privado; leia antes de compartilhar.** `check.py` procura chaves, tokens, e-mails e pastas pessoais, e não é uma auditoria: nomes de pessoas e de clientes passam.
-- Texto vindo de logs entra na página como texto, nunca como HTML.
-- A pergunta em linguagem natural usa a conta do Claude de quem pergunta, e o texto do modelo pode estar errado.
+- The board shows workflow names, file names, failures and records. **Artifacts start private; read the board before sharing it.** `check.py` looks for keys, tokens, vault references, e-mail addresses and home folder paths. It is not an audit: names of people and customers get through.
+- Text coming from logs is inserted as text, never as HTML.
+- Natural language questions use the Claude account of whoever asks, and model-written text can be wrong.
 
-## Limites desta versão
+## Limitations in this version
 
-- A coleta automática é só de **GitHub Actions**, e usa a execução mais recente de cada rotina. Outros orquestradores exigem escrever a descrição.
-- O rascunho automático traz etapas, tempos e resultado. **Fluxo e casos reais vêm da skill `explain`**, lendo o seu código.
-- Não há cadastro de fontes nem atualização ao vivo: o quadro é um retrato.
-- Testado em Chrome no computador. Celular e outros navegadores não foram testados.
+- Automatic collection covers **GitHub Actions only**, using the latest run of each workflow. For other orchestrators the spec has to be written by hand.
+- The automatic draft has steps, durations and results. **Flows and real examples come from the `explain` skill**, which reads your code.
+- The board is a snapshot. It does not update live.
+- Tested in desktop Chrome. Phones and other browsers have not been tested.
 
-## Desenvolvimento
+## Development
 
 ```bash
 python3 -m unittest discover -s tests
 claude plugin validate .
 python3 scripts/build.py examples/demo.spec.json -o docs/demo.html
-node scripts/record.mjs docs/demo.html docs   # regrava o vídeo; precisa de Chrome e ffmpeg
+node scripts/record.mjs docs/demo.html docs   # re-records the video; needs Chrome and ffmpeg
 ```
 
-`record.mjs` usa mouse e teclado de verdade e **falha se uma interação não funcionar**.
+`record.mjs` drives the board with real mouse and keyboard events and **fails if an interaction stops working**.
 
-## Créditos
+## Credits
 
-Ideias de desenho aprendidas com [diagram-design](https://github.com/cathrynlavery/diagram-design) (limite de densidade, olhar antes de entregar), [stack-diagram](https://github.com/caru-ini/stack-diagram) (grade, blocos claros, setas em ângulo reto) e [lanshu-animated-architecture-diagram](https://github.com/cclank/lanshu-animated-architecture-diagram) (fluxo animado). O código deste plugin é próprio. Ícones: [Lucide](https://lucide.dev), licença ISC.
+Design ideas learned from [diagram-design](https://github.com/cathrynlavery/diagram-design) (density limits, look before delivering), [stack-diagram](https://github.com/caru-ini/stack-diagram) (grid, light tiles, right-angle arrows) and [lanshu-animated-architecture-diagram](https://github.com/cclank/lanshu-animated-architecture-diagram) (animated flow). The code in this plugin is original. Icons: [Lucide](https://lucide.dev), ISC license.
