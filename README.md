@@ -19,7 +19,7 @@ Installing from this repository was checked with **Claude Code 2.1.332** on macO
 Inside Claude Code:
 
 ```
-/plugin marketplace add molholabs/pipeline-board
+/plugin marketplace add lucianfialho/pipeline-board
 /plugin install pipeline-board@pipeline-board
 ```
 
