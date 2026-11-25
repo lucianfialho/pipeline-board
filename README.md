@@ -70,6 +70,7 @@ A board built only from reading code can be wrong, especially for calls decided 
 
 - **Infinite canvas.** Drag to pan, pinch or ⌘/Ctrl + scroll to zoom, move cards and resize them: steps reflow and arrows redraw. One button restores the auto layout.
 - **Inside each step.** Flow with loops, parallelism and decisions; measurements; a real example; latest records; where it writes.
+- **Full audit (optional).** Ask for an audit with agents: three read-only agents search in parallel (data, silent failures, operations) and a fourth tries to refute their claims. It costs more than the default mode.
 - **Findings.** Problems appear on the step and in one panel, split into confirmed and suspected. The builder rejects a confirmed finding with no evidence.
 - **Replay.** A run plays back in seconds, with a clock, and stops where it broke.
 - **Search** (`/` or ⌘K) across names, files, flows and examples.
