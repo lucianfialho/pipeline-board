@@ -1,3 +1,5 @@
+<img src="assets/logo.svg" alt="" width="96" height="96">
+
 # pipeline-board
 
 **See, understand and speed up your pipeline.** A plugin for **Claude Code** that turns your real runs into an interactive board and publishes it to **your own artifact**.

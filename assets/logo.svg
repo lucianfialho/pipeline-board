@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="pipeline-board">
+  <rect x="2" y="2" width="124" height="124" rx="28" fill="#101216" stroke="#3a414d" stroke-width="3"/>
+  <!-- três etapas em escada, setas em ângulo reto como no quadro; a última em laranja é onde o pipeline quebrou -->
+  <g fill="none" stroke="#4a90e8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M29 84V66H50"/>
+    <path d="M64 54V34H84"/>
+  </g>
+  <rect x="15" y="82" width="28" height="27" rx="8" fill="#4a90e8"/>
+  <rect x="50" y="52" width="28" height="27" rx="8" fill="#f2f4f7"/>
+  <rect x="84" y="19" width="30" height="30" rx="8" fill="#e8590c"/>
+  <path d="M99 26v9" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="99" cy="42.5" r="3.2" fill="#fff"/>
+</svg>
