@@ -41,6 +41,7 @@ The skill instructions are written in Portuguese. They tell Claude to answer in 
 | `/pipeline-board:gaps` | "find the gaps in my pipeline" | Looks for truncated or stale data, failures that look like success and lost work, and shows each as **confirmed** or **suspected** |
 | `/pipeline-board:explain` | "what does this step do?" | Reads your code and fills in the flow, measurements, **real examples**, latest records and models used |
 | `/pipeline-board:speedup` | "this is slow" or "this broke" | Finds the actual bottleneck, parallelizes in code and **measures before and after** |
+| `/pipeline-board:watch` | "keep my board up to date" | Turns the update hooks on or off for a project |
 | `/pipeline-board:limits` | "how close are we to a limit?" | CI minutes, job timeout, cache and files per deploy |
 
 ## Any project
@@ -63,6 +64,20 @@ python3 trace.py spec trace.jsonl -o spec.json --merge spec.json    # add timing
 `trace.py` is a single file using only the standard library. It passes output and exit code through, and it does not record command arguments or output. Step and group names are recorded. It measures commands: phases inside one process need to be split into separate commands. Replay plays steps one at a time, so for steps that ran in parallel its clock shows the sum of their durations, not the elapsed time.
 
 A board built only from reading code can be wrong, especially for calls decided at runtime.
+
+## Keeping the board up to date
+
+Ask **"keep my board up to date"**. The `watch` skill turns on two hooks for that project:
+
+- **When a session starts,** new GitHub Actions runs are merged into your board. Only durations, results and replays change. Cards, flows, examples, findings and limits are preserved. Steps are matched by their `ci` field (`"Workflow :: Step name"`) or by an identical, unambiguous name.
+- **After Claude runs `git push` or `gh workflow run`,** Claude is told the board will be stale until the run finishes.
+
+Rules:
+
+- Hooks do nothing in projects you have not turned on. The activation is stored in the plugin data folder, not in the repository, so a cloned project cannot turn itself on.
+- By default Claude **asks before publishing**. Automatic publishing is a separate opt-in. It pauses if the secret scan finds something or if findings changed since the last publication, and Claude is told not to publish if the artifact is no longer private. That last check is an instruction to Claude, not something the script can enforce.
+- Hooks only run while Claude Code is open. Runs that finish while it is closed show up in the next session.
+- The spec file in your project is rewritten when new runs arrive. GitHub Actions only. Needs `gh` and `python3`.
 
 ## What the board does
 

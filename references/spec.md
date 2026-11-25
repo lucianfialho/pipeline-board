@@ -29,6 +29,7 @@ Tudo o que o quadro mostra vem deste arquivo. O gerador (`scripts/build.py`) rec
 
 - `icon`: `bot database file globe learn news rss shield tag wand`.
 - `col` e `row` posicionam o cartão no layout automático. Sem eles, os cartões vão em fila.
+- `ci`: lista de passos do GitHub Actions que a etapa representa, no formato `"Rotina :: Nome do passo"`. É o que permite ao `collect.py --merge` e ao hook atualizar o tempo sem mexer no resto. `source` e as métricas com `auto: true` são escritos por eles.
 - `tone: "warn"` marca o cartão com borda laranja. Um cartão com falha confirmada fica laranja sozinho.
 - `status` de etapa: `"failed"` ou ausente.
 - Em `flow`, `["L", rótulo, [passos], 8]` é uma repetição; o número, opcional, é quantas rodam em paralelo.
