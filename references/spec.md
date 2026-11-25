@@ -21,6 +21,7 @@ Tudo o que o quadro mostra vem deste arquivo. O gerador (`scripts/build.py`) rec
  "edges": [["ingest", "transform", "rótulo", "fail ou vazio"]],
  "runs": [{"label": "Diária", "steps": ["orders"], "seconds": [95], "breakAt": "orders", "note": "frase mostrada no fim"}],
  "limits": [{"name": "Minutos de CI", "used": 255, "limit": 2000, "unit": "min", "note": ""}],
+ "findings": [{"title": "Lista para em 1.000", "status": "confirmed", "severity": "high", "step": "orders", "file": "jobs/orders.py:40", "detail": "o que acontece", "evidence": "o que foi visto", "fix": "correção sugerida"}],
  "ask": true,
  "labels": {"report": "Report"}
 }
@@ -28,7 +29,12 @@ Tudo o que o quadro mostra vem deste arquivo. O gerador (`scripts/build.py`) rec
 
 - `icon`: `bot database file globe learn news rss shield tag wand`.
 - `col` e `row` posicionam o cartão no layout automático. Sem eles, os cartões vão em fila.
-- `tone: "warn"` marca o cartão com problema.
+- `tone: "warn"` marca o cartão com borda laranja. Um cartão com falha confirmada fica laranja sozinho.
+- `status` de etapa: `"failed"` ou ausente.
+- Em `flow`, `["L", rótulo, [passos], 8]` é uma repetição; o número, opcional, é quantas rodam em paralelo.
+- Em `edges`, o quarto campo é `"fail"` (seta tracejada, sem animação) ou vazio.
+- `findings`: `status` é `confirmed` (exige `evidence`) ou `suspected`; `severity` é `high`, `medium` ou `low`; `step` é opcional. Problema achado na leitura vai aqui, não em `case`.
+- Contagens que já estão nos dados do projeto podem ir em `metrics`, com a origem e a data em `when`.
 - `ask: false` esconde a pergunta em linguagem natural. Ela só aparece quando a página é um artefato com a capacidade `sample`.
 
 ## Sem tempo medido

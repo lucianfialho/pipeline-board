@@ -20,6 +20,17 @@ class Montagem(unittest.TestCase):
             self.assertIn(trecho, erros)
         self.assertEqual(build.conferir(SPEC), [])
 
+    def test_falha_confirmada_exige_evidencia(self):
+        base = {"title": "f", "status": "confirmed", "severity": "high", "step": "x"}
+        erros = lambda **k: " | ".join(build.conferir({**SPEC, "findings": [{**base, **k}]}))
+        self.assertIn("exige 'evidence'", erros())
+        self.assertIn("exige 'evidence'", erros(evidence="  "))
+        self.assertEqual(erros(evidence="linha 3"), "")
+        self.assertEqual(erros(status="suspected"), "")
+        self.assertIn("etapa que não existe", erros(evidence="a", step="zz"))
+        self.assertIn("severity", erros(evidence="a", severity="enorme"))
+        self.assertIn("status", erros(status="talvez"))
+
     def test_texto_de_log_nao_fecha_o_script(self):
         veneno = "</script><img src=x onerror=alert(1)> __SPEC__ __ICONS__"
         spec = {"title": veneno, "cards": [{"id": "a", "title": veneno, "steps": [{"id": "x", "name": veneno}]}]}

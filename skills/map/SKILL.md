@@ -42,18 +42,22 @@ Cuidados:
 - Ele mede comandos. Fases dentro de um mesmo processo só aparecem separadas se forem separadas em comandos ou marcadas no código.
 - O replay passa as etapas uma de cada vez, mesmo as que rodaram juntas, e o relógio dele soma os tempos. Se houve paralelismo, diga isso.
 
+Se `collect.py` falhar (sem `gh`, sem acesso, sem execuções), siga pelo caminho B e diga que não há tempos.
+
 ## 3. Organizar para um humano entender
 - 4 a 8 cartões, com `col` e `row` no sentido do fluxo;
 - junte passos de preparação que não explicam nada;
 - dê nomes que um colega novo entenda;
 - acrescente um cartão de fontes e um de destinos quando der para saber pelo código;
-- ligue os cartões com `edges` curtas.
+- ligue os cartões com `edges` curtas. Confira que todo cartão que alimenta outro tem a seta de saída: um ramo que volta ao fluxo precisa da volta.
 
 Ao renomear uma etapa já gravada, renomeie também no comando do gravador, ou a próxima junção cria uma etapa nova.
 
 Para fluxo interno, casos reais e registros, use a skill `explain` do mesmo plugin. Faça isso nas etapas que a pessoa apontar ou nas três mais lentas ou que falham.
 
 ## 4. Montar e olhar
+**O quadro só sai de `build.py`. Nunca escreva o HTML à mão:** uma página improvisada não passa pela conferência, não escapa o texto vindo de logs e não tem o que o quadro tem. Se os scripts não puderem rodar (permissão negada, sem Python), pare, entregue o `spec.json`, mostre os dois comandos abaixo e diga que o quadro não foi gerado.
+
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/check.py" spec.json
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/build.py" spec.json -o board.html

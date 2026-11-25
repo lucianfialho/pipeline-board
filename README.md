@@ -12,7 +12,7 @@
 
 ## Works with Claude Code
 
-Installing from this repository was checked with **Claude Code 2.1.332** on macOS: the marketplace was added, the plugin installed and all 4 skills were listed. The guided flows inside each skill have not been run end to end in a fresh session yet.
+Installing from this repository was checked with **Claude Code 2.1.332** on macOS: the marketplace was added, the plugin installed and the 4 skills present at that time were listed (`gaps` was added later). The `map` skill was then run once in a fresh headless session: it was triggered by a plain request and produced a valid spec, but the scripts were blocked by the test's own permission rules, so the guided flow has not yet run end to end.
 
 ## Install
 
@@ -38,6 +38,7 @@ The skill instructions are written in Portuguese. They tell Claude to answer in 
 | Skill | Ask when | What it does |
 |---|---|---|
 | `/pipeline-board:map` | "draw my pipeline" | Reads GitHub Actions runs or your code, groups steps into cards, scans for secrets and publishes to your artifact |
+| `/pipeline-board:gaps` | "find the gaps in my pipeline" | Looks for truncated or stale data, failures that look like success and lost work, and shows each as **confirmed** or **suspected** |
 | `/pipeline-board:explain` | "what does this step do?" | Reads your code and fills in the flow, measurements, **real examples**, latest records and models used |
 | `/pipeline-board:speedup` | "this is slow" or "this broke" | Finds the actual bottleneck, parallelizes in code and **measures before and after** |
 | `/pipeline-board:limits` | "how close are we to a limit?" | CI minutes, job timeout, cache and files per deploy |
@@ -69,6 +70,7 @@ A board built only from reading code can be wrong, especially for calls decided 
 
 - **Infinite canvas.** Drag to pan, pinch or ⌘/Ctrl + scroll to zoom, move cards and resize them: steps reflow and arrows redraw. One button restores the auto layout.
 - **Inside each step.** Flow with loops, parallelism and decisions; measurements; a real example; latest records; where it writes.
+- **Findings.** Problems appear on the step and in one panel, split into confirmed and suspected. The builder rejects a confirmed finding with no evidence.
 - **Replay.** A run plays back in seconds, with a clock, and stops where it broke.
 - **Search** (`/` or ⌘K) across names, files, flows and examples.
 - **Copy context.** One click copies a step as text, ready to paste into Claude and ask for a fix.

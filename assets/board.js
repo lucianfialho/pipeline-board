@@ -11,10 +11,14 @@ const dur = s => s == null ? "" : s < 1 ? "<1 s" : s < 90 ? Math.round(s) + " s"
 const clock = s => { const m = Math.floor(s / 60); return (m >= 60 ? Math.floor(m / 60) + "h " : "") + String(m % 60).padStart(2, "0") + ":" + String(Math.floor(s % 60)).padStart(2, "0"); };
 const T = Object.assign({ search: "Buscar etapas…  ( / )", report: "Relatório", limits: "Limites", fit: "Arrumar", pause: "Pausar", resume: "Continuar", exit: "Sair", follow: "seguir",
   copy: "Copiar contexto", copied: "✓ Copiado", close: "Fechar ✕", prev: "← Anterior", next: "Próxima →", full: "Tela cheia", side: "Voltar ao lado",
+  findings: "Falhas", confirmed: "Confirmadas", suspected: "Suspeitas, não confirmadas", evidence: "Evidência", fix: "Correção sugerida", openStep: "Abrir etapa", high: "alta", medium: "média", low: "baixa",
   input: "Entra", output: "Sai", recent: "Últimos registros", case: "Caso real", step: "etapa", of: "de", askPh: "Pergunte sobre esta etapa…", ask: "Perguntar" }, SPEC.labels || {});
 
 const STEPS = {}, ORDER = [], CARDOF = {};
 SPEC.cards.forEach(c => c.steps.forEach(s => { STEPS[s.id] = s; ORDER.push(s.id); CARDOF[s.id] = c.id; }));
+const RANK = { high: 0, medium: 1, low: 2 };
+const FINDINGS = [...(SPEC.findings || [])].sort((a, b) => (a.status === "confirmed" ? 0 : 1) - (b.status === "confirmed" ? 0 : 1) || RANK[a.severity] - RANK[b.severity]);
+const findingsOf = id => FINDINGS.filter(f => f.step === id);
 
 // ---------- canvas ----------
 const NS = "http://www.w3.org/2000/svg";
@@ -27,7 +31,7 @@ panel.setAttribute("role", "dialog"); panel.setAttribute("aria-labelledby", "p-t
 
 const cards = {}, tiles = {};
 SPEC.cards.forEach(c => {
-  const el = $("section", "card " + (c.tone || "")), head = $("header"), t = $("div");
+  const el = $("section", "card " + (c.tone || (c.steps.some(s => findingsOf(s.id).some(f => f.status === "confirmed")) ? "warn" : ""))), head = $("header"), t = $("div");
   el.dataset.id = c.id; t.append($("h4", null, c.title), $("p", null, c.summary || ""));
   const f = btn("⌖", () => flyTo(c.id), "focus"); f.setAttribute("aria-label", "Aproximar " + c.title); head.append(t, f);
   const list = $("div", "steps");
@@ -38,7 +42,10 @@ SPEC.cards.forEach(c => {
     const tx = $("span", "tx"); tx.append($("b", null, s.name), $("small", null, s.meta || dur(s.seconds)));
     if (s.writes) tx.append($("small", "out", "→ " + s.writes));
     b.append(ic, tx);
-    if (s.status === "failed") b.append($("em", "badge bad", "!")); else if (s.badge) b.append($("em", "badge", s.badge));
+    const found = findingsOf(s.id), sure = found.filter(f => f.status === "confirmed").length;
+    if (found.length) b.append($("em", "badge " + (sure ? "bad" : "maybe"), sure ? "▲ " + sure : "? " + found.length));
+    else if (s.status === "failed") b.append($("em", "badge bad", "!"));
+    else if (s.badge) b.append($("em", "badge", s.badge));
     tiles[s.id] = b; list.append(b);
   });
   const grip = $("i", "grip"); el.append(head, list, grip); world.append(el);
@@ -154,10 +161,29 @@ function contextOf(id) {
   (s.metrics || []).forEach(m => L.push("", `### ${m.when || "Metrics"}`, ...(m.values || []).map(([v, l]) => `- ${l}: ${v}`), m.note || ""));
   if (s.case) L.push("", `### ${T.case}: ${s.case.name}`, ...(s.case.rows || []).map(([k, v, t]) => `- ${k}: ${v}${t === "bad" ? " [problem]" : ""}`), s.case.note || "");
   if (s.records) L.push("", "### " + (s.records.title || T.recent), ...(s.records.items || []).slice(0, 5).map(i => "- " + i.slice(0, 3).filter(Boolean).join(" | ")));
+  findingsOf(id).forEach(f => L.push("", findingText(f)));
   return L.filter((l, i) => l !== "" || L[i - 1] !== "").join("\n").trim();
 }
-function copyContext(id, button) {
-  const text = contextOf(id);
+const findingText = f => [`### ${f.status === "confirmed" ? "Confirmed problem" : "Suspected problem (not confirmed)"} [${f.severity}]: ${f.title}`, f.file ? "Code: " + f.file : "", f.detail || "", f.evidence ? "Evidence: " + f.evidence : "", f.fix ? "Suggested fix: " + f.fix : ""].filter(Boolean).join("\n");
+function findingBox(f, withStep) {
+  const sec = $("section", "finding " + f.status), top = $("div", "top");
+  top.append($("b", null, f.title), $("span", "st", (f.status === "confirmed" ? "▲ " : "? ") + (T[f.severity] || f.severity))); sec.append(top);
+  if (f.file) sec.append($("p", "meta", f.file));
+  if (f.detail) sec.append($("p", "note", f.detail));
+  for (const [k, v] of [[T.evidence, f.evidence], [T.fix, f.fix]]) if (v) { const p = $("p", "note"); p.append($("b", null, k + ": "), v); sec.append(p); }
+  const row = $("div", "chips"), cp = btn(T.copy, () => copyText(`## ${SPEC.title}\n${findingText(f)}`, cp), "copy"); row.append(cp);
+  if (withStep && STEPS[f.step]) row.append(btn(T.openStep + ": " + STEPS[f.step].name, () => { openStep(f.step); flyTo(CARDOF[f.step]); }));
+  sec.append(row); return sec;
+}
+function openFindings() {
+  showPanel(T.findings, SPEC.generated || "");
+  for (const status of ["confirmed", "suspected"]) {
+    const list = FINDINGS.filter(f => f.status === status);
+    if (list.length) body.append($("h4", null, `${T[status]} (${list.length})`), ...list.map(f => findingBox(f, true)));
+  }
+}
+function copyContext(id, button) { copyText(contextOf(id), button); }
+function copyText(text, button) {
   const manual = () => { let a = body.querySelector(".copytext"); if (!a) { a = $("textarea", "copytext"); a.readOnly = true; a.setAttribute("aria-label", T.copy); button.parentNode.after(a); } a.value = text; a.focus(); a.select(); };
   try { navigator.clipboard.writeText(text).then(() => { button.textContent = T.copied; setTimeout(() => { button.textContent = T.copy; }, 2200); }, manual); } catch { manual(); }
 }
@@ -174,7 +200,7 @@ function openStep(id, fromHash) {
   showPanel(s.name, s.file || "", [p, n]);
   const row = $("div", "chips"); const cp = btn(T.copy, () => copyContext(id, cp), "copy"); row.append(cp); body.append(row, $("p", "note", [dur(s.seconds), s.status].filter(Boolean).join(" · ")));
   if (SPEC.ask !== false && sampler) body.append(askBox(id));
-  for (const x of [recordsOf(s), ...metricsOf(s), caseOf(s)]) if (x) body.append(x);
+  for (const x of [...findingsOf(id).map(f => findingBox(f)), recordsOf(s), ...metricsOf(s), caseOf(s)]) if (x) body.append(x);
   const io = (k, v) => { const e = $("p", "note"); e.append($("b", null, k + ": "), v); return e; };
   if (s.input) body.append(io(T.input, s.input));
   if (s.flow) { const f = $("div", "flow"); s.flow.forEach(x => f.append(flowNode(x))); body.append(f); }
@@ -288,6 +314,7 @@ const pauseB = btn(T.pause, () => { if (!run) return; run.paused = !run.paused; 
 const exitB = btn(T.exit, () => { clearRun(); fitAll(); }); pauseB.hidden = exitB.hidden = true; top.append(pauseB, exitB);
 if ((SPEC.runs || []).length) { const l = $("label"), cb = $("input"); cb.type = "checkbox"; cb.checked = true; cb.onchange = () => { follow = cb.checked; }; l.append(cb, " " + T.follow); top.append(l); }
 top.append(btn(T.report, openReport));
+if (FINDINGS.length) { const n = FINDINGS.filter(f => f.status === "confirmed").length; top.append(btn(`${T.findings} · ${n} ▲ ${FINDINGS.length - n} ?`, openFindings, n ? "alert" : "")); }
 if ((SPEC.limits || []).length) { const n = SPEC.limits.filter(l => ["warn", "crit"].includes(state(l)[0])).length; top.append(btn(T.limits + (n ? ` · ${n} ▲` : ""), openLimits, n ? "alert" : "")); }
 const tools = float("f-zoom"); tools.append(pct, btn("+", () => zoom(1.25)), btn("−", () => zoom(.8)), btn("⤢", () => fitAll()), btn(T.fit, () => { try { localStorage.removeItem(KEY); } catch { /* idem */ } autoLayout(); fitAll(); }));
 
@@ -305,5 +332,5 @@ addEventListener("resize", () => { if (!at) fitAll(true); });
 const fromHash = () => { const m = /^#step-(.+)$/.exec(location.hash); if (m && STEPS[m[1]]) openStep(m[1], true); };
 addEventListener("hashchange", fromHash); sampling.then(fromHash);
 // para testes e para gravar a demonstração
-window.pipelineBoard = { openStep, closePanel, flyTo, fitAll, play, openLimits, openReport, contextOf, cards, tiles, steps: STEPS };
+window.pipelineBoard = { openStep, closePanel, flyTo, fitAll, play, openLimits, openReport, openFindings, contextOf, cards, tiles, steps: STEPS };
 })();

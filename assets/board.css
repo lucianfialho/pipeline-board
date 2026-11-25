@@ -35,6 +35,12 @@ button,input,select,textarea{font:inherit;color:inherit}
 .step.bad small{color:var(--warn)}
 .badge{position:absolute;top:-8px;right:8px;font:600 10px "Geist Mono",monospace;font-style:normal;color:#fff;background:#2a78d6;border-radius:9px;padding:2px 7px}
 .badge.bad{background:var(--warn-fill)}
+.badge.maybe{background:#6b7280}
+.finding{border:1px solid var(--line);border-left:4px solid var(--warn-fill);border-radius:8px;padding:10px 12px;margin:0 0 12px}
+.finding.suspected{border-left:4px dashed var(--mute)}
+.finding .top{display:flex;justify-content:space-between;gap:10px}
+.finding .st{flex:none;font:11px "Geist Mono",monospace;color:var(--mute)}
+.finding.confirmed .st{color:var(--warn);font-weight:600}
 .grip{position:absolute;right:3px;bottom:3px;width:20px;height:20px;cursor:ew-resize;background:linear-gradient(135deg,transparent 52%,var(--mute) 52% 58%,transparent 58% 70%,var(--mute) 70% 76%,transparent 76%);opacity:.7}
 .find{box-sizing:border-box;width:100%;padding:9px 11px;background:var(--panel);border:1px solid var(--edge);border-radius:10px}
 .find:focus{outline:2px solid var(--blue);border-color:transparent}

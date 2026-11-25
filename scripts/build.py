@@ -41,6 +41,28 @@ def conferir(spec):
         erros += [f"execução '{r['label']}' cita etapa que não existe: {i}" for i in r["steps"] + ([r["breakAt"]] if r.get("breakAt") else []) if i not in etapas]
         if r.get("seconds") and len(r["seconds"]) != len(r["steps"]):
             erros.append(f"execução '{r['label']}': 'seconds' precisa ter um valor por etapa")
+    erros += conferir_falhas(spec.get("findings", []), etapas)
+    return erros
+
+
+SITUACOES, GRAVIDADES = ("confirmed", "suspected"), ("high", "medium", "low")
+
+
+def conferir_falhas(falhas, etapas):
+    erros = []
+    for f in falhas:
+        nome = f.get("title")
+        if not nome:
+            erros.append("falha sem title")
+            continue
+        if f.get("status") not in SITUACOES:
+            erros.append(f"falha '{nome}': status precisa ser {' ou '.join(SITUACOES)}")
+        if f.get("severity") not in GRAVIDADES:
+            erros.append(f"falha '{nome}': severity precisa ser {', '.join(GRAVIDADES)}")
+        if f.get("step") and f["step"] not in etapas:
+            erros.append(f"falha '{nome}' cita etapa que não existe: {f['step']}")
+        if f.get("status") == "confirmed" and not str(f.get("evidence") or "").strip():
+            erros.append(f"falha '{nome}': 'confirmed' exige 'evidence' (o que foi visto e onde). Sem isso é 'suspected'")
     return erros
 
 

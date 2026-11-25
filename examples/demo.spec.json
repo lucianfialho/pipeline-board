@@ -322,5 +322,25 @@
    "breakAt": "publish",
    "note": "Quebrou em “Publicar”: arquivos demais para o limite."
   }
+ ],
+ "findings": [
+  {
+   "title": "Publicação passa do limite de arquivos",
+   "status": "confirmed",
+   "severity": "high",
+   "step": "publish",
+   "file": ".github/workflows/daily.yml",
+   "detail": "O painel continua com os dados de ontem.",
+   "evidence": "Exemplo fictício: o log mostra 1.204 arquivos para um limite de 1.000.",
+   "fix": "Juntar as páginas por mês."
+  },
+  {
+   "title": "Catálogo vazio passaria pela conferência",
+   "status": "suspected",
+   "severity": "medium",
+   "step": "catalog",
+   "file": "jobs/catalog.py",
+   "detail": "Exemplo fictício: a conferência olha o formato, não a quantidade."
+  }
  ]
 }
