@@ -1,0 +1,7 @@
+{
+  "name": "pipeline-board",
+  "version": "0.1.0",
+  "description": "Vê, entende e acelera um pipeline: quadro interativo montado das execuções reais, publicado como artefato do Claude.",
+  "author": { "name": "Lucian Fialho" },
+  "keywords": ["pipeline", "github-actions", "diagram", "artifact", "observability"]
+}

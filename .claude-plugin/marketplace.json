@@ -1,0 +1,6 @@
+{
+  "name": "pipeline-board",
+  "description": "O plugin pipeline-board",
+  "owner": { "name": "Lucian Fialho" },
+  "plugins": [{ "name": "pipeline-board", "source": "./", "description": "Quadro interativo do seu pipeline, no seu artefato" }]
+}

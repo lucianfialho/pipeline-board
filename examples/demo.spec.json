@@ -1,0 +1,326 @@
+{
+ "title": "loja-exemplo · pipeline",
+ "subtitle": "Pipeline fictício, só para demonstração",
+ "generated": "exemplo",
+ "cards": [
+  {
+   "id": "ingest",
+   "title": "Ingestão",
+   "summary": "4 fontes · 6,2 min",
+   "col": 0,
+   "row": 0,
+   "width": 320,
+   "steps": [
+    {
+     "id": "orders",
+     "name": "Pedidos",
+     "icon": "database",
+     "seconds": 95,
+     "writes": "raw/orders.parquet",
+     "input": "Banco da loja",
+     "output": "Pedidos do dia",
+     "file": "jobs/orders.py",
+     "flow": [
+      "Lê a marca d'água da última carga",
+      [
+       "L",
+       "para cada lote de 5 mil linhas",
+       [
+        "Copia o lote",
+        [
+         "?",
+         "Veio vazio com a tabela cheia?",
+         "Sim: trata como falha e não grava zero"
+        ]
+       ]
+      ],
+      "Atualiza a marca d'água"
+     ],
+     "metrics": [
+      {
+       "when": "Execução de exemplo",
+       "values": [
+        [
+         "182 mil",
+         "linhas"
+        ],
+        [
+         "1,9 mil/s",
+         "linhas por segundo"
+        ],
+        [
+         "95 s",
+         "tempo"
+        ]
+       ]
+      }
+     ],
+     "records": {
+      "title": "Últimos lotes",
+      "items": [
+       [
+        "Lote 37",
+        "4.812 linhas",
+        "exemplo"
+       ],
+       [
+        "Lote 36",
+        "5.000 linhas",
+        "exemplo"
+       ],
+       [
+        "Lote 35",
+        "5.000 linhas",
+        "exemplo"
+       ]
+      ]
+     }
+    },
+    {
+     "id": "catalog",
+     "name": "Catálogo",
+     "icon": "globe",
+     "seconds": 140,
+     "writes": "raw/catalog.json",
+     "badge": "8x",
+     "file": "jobs/catalog.py",
+     "flow": [
+      [
+       "L",
+       "8 fornecedores ao mesmo tempo",
+       [
+        "Baixa o catálogo",
+        [
+         "?",
+         "Respondeu?",
+         "Não: mantém o de ontem"
+        ]
+       ],
+       8
+      ]
+     ]
+    },
+    {
+     "id": "reviews",
+     "name": "Avaliações",
+     "icon": "rss",
+     "seconds": 88,
+     "writes": "raw/reviews.jsonl"
+    },
+    {
+     "id": "rates",
+     "name": "Câmbio",
+     "icon": "tag",
+     "seconds": 3,
+     "writes": "raw/rates.csv"
+    }
+   ]
+  },
+  {
+   "id": "transform",
+   "title": "Transformação",
+   "summary": "limpeza e junção · 9,4 min",
+   "col": 1,
+   "row": 0,
+   "width": 560,
+   "steps": [
+    {
+     "id": "dedupe",
+     "name": "Remover duplicados",
+     "icon": "wand",
+     "seconds": 120,
+     "writes": "clean/orders",
+     "case": {
+      "name": "Pedido repetido",
+      "rows": [
+       [
+        "Entrada",
+        "pedido 1042 aparece 2 vezes"
+       ],
+       [
+        "Regra",
+        "mesma chave e mesmo total"
+       ],
+       [
+        "Saída",
+        "fica 1 linha",
+        "ok"
+       ]
+      ],
+      "note": "Exemplo fictício."
+     }
+    },
+    {
+     "id": "join",
+     "name": "Juntar fontes",
+     "icon": "database",
+     "seconds": 210,
+     "writes": "clean/sales"
+    },
+    {
+     "id": "classify",
+     "name": "Classificar avaliações",
+     "icon": "tag",
+     "seconds": 190,
+     "writes": "clean/sentiment",
+     "badge": "4x",
+     "case": {
+      "name": "Resposta com pouca certeza",
+      "rows": [
+       [
+        "Positiva",
+        "0,94: publica",
+        "ok"
+       ],
+       [
+        "Assunto: entrega",
+        "0,41: vai para revisão",
+        "bad"
+       ]
+      ]
+     }
+    },
+    {
+     "id": "check",
+     "name": "Conferir volumes",
+     "icon": "shield",
+     "seconds": 12,
+     "writes": "libera ou para",
+     "flow": [
+      "Compara com a carga anterior",
+      [
+       "?",
+       "Caiu mais de 10%?",
+       "Sim: para antes de publicar"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "serve",
+   "title": "Entrega",
+   "summary": "quebrou na publicação",
+   "col": 2,
+   "row": 0,
+   "width": 320,
+   "tone": "warn",
+   "steps": [
+    {
+     "id": "model",
+     "name": "Modelo de demanda",
+     "icon": "wand",
+     "seconds": 260,
+     "writes": "marts/forecast"
+    },
+    {
+     "id": "dash",
+     "name": "Painel",
+     "icon": "news",
+     "seconds": 75,
+     "writes": "dashboard/"
+    },
+    {
+     "id": "publish",
+     "name": "Publicar",
+     "icon": "globe",
+     "seconds": 34,
+     "status": "failed",
+     "writes": "produção",
+     "file": ".github/workflows/daily.yml",
+     "flow": [
+      "Empacota os arquivos",
+      [
+       "?",
+       "Até 1.000 arquivos?",
+       "Não: a publicação falha"
+      ],
+      "Ativa a versão"
+     ],
+     "case": {
+      "name": "Falha de exemplo",
+      "rows": [
+       [
+        "Erro",
+        "1.204 arquivos, o limite é 1.000",
+        "bad"
+       ],
+       [
+        "Efeito",
+        "o painel continua com os dados de ontem"
+       ]
+      ]
+     },
+     "metrics": [
+      {
+       "when": "Execução de exemplo",
+       "values": [
+        [
+         "1.204",
+         "arquivos"
+        ],
+        [
+         "1.000",
+         "limite"
+        ]
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "edges": [
+  [
+   "ingest",
+   "transform",
+   "parquet"
+  ],
+  [
+   "transform",
+   "serve",
+   "tabelas"
+  ]
+ ],
+ "limits": [
+  {
+   "name": "Minutos de CI no mês",
+   "used": 1710,
+   "limit": 2000,
+   "unit": "min",
+   "note": "Valores fictícios."
+  },
+  {
+   "name": "Arquivos por publicação",
+   "used": 1204,
+   "limit": 1000,
+   "unit": "arquivos"
+  },
+  {
+   "name": "Armazenamento",
+   "used": 2.4,
+   "limit": 10,
+   "unit": "GB"
+  }
+ ],
+ "runs": [
+  {
+   "label": "Diária",
+   "steps": [
+    "orders",
+    "catalog",
+    "reviews",
+    "rates",
+    "dedupe",
+    "join",
+    "classify",
+    "check",
+    "model",
+    "dash",
+    "publish"
+   ],
+   "breakAt": "publish",
+   "note": "Quebrou em “Publicar”: arquivos demais para o limite."
+  }
+ ]
+}
