@@ -9,11 +9,11 @@
 ## Instalar
 
 ```
-/plugin marketplace add ~/Code/pipeline-board
+/plugin marketplace add molholabs/pipeline-board
 /plugin install pipeline-board@pipeline-board
 ```
 
-Só para experimentar numa sessão: `claude --plugin-dir ~/Code/pipeline-board`.
+O repositório é privado: quem instala precisa de acesso a ele no GitHub. Para experimentar numa sessão a partir de uma cópia local: `claude --plugin-dir <pasta>`.
 
 Precisa de Python 3.9+ e, para ler as execuções, da CLI [`gh`](https://cli.github.com/) autenticada.
 
