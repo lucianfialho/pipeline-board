@@ -41,6 +41,7 @@ The skill instructions are written in Portuguese. They tell Claude to answer in 
 | `/pipeline-board:gaps` | "find the gaps in my pipeline" | Looks for truncated or stale data, failures that look like success and lost work, and shows each as **confirmed** or **suspected** |
 | `/pipeline-board:explain` | "what does this step do?" | Reads your code and fills in the flow, measurements, **real examples**, latest records and models used |
 | `/pipeline-board:speedup` | "this is slow" or "this broke" | Finds the actual bottleneck, parallelizes in code and **measures before and after** |
+| `/pipeline-board:fix` | paste the context copied from a finding | Checks whether the claim is real, reproduces it with a failing test, **asks before changing code**, then fixes it on a separate branch |
 | `/pipeline-board:watch` | "keep my board up to date" | Turns the update hooks on or off for a project |
 | `/pipeline-board:limits` | "how close are we to a limit?" | CI minutes, job timeout, cache and files per deploy |
 
@@ -86,6 +87,7 @@ Rules:
 - **Infinite canvas.** Drag to pan, pinch or ⌘/Ctrl + scroll to zoom, move cards and resize them: steps reflow and arrows redraw. One button restores the auto layout.
 - **Inside each step.** Flow with loops, parallelism and decisions; measurements; a real example; latest records; where it writes.
 - **Full audit (optional).** Ask for an audit with agents: three read-only agents search in parallel (data, silent failures, operations) and a fourth tries to refute their claims. It costs more than the default mode.
+- **Registry.** A searchable list of what the pipeline reads (`catalog`), with type filters and a form that opens a prefilled GitHub issue to add an entry. Custom icons are supported.
 - **Findings.** Problems appear on the step and in one panel, split into confirmed and suspected. The builder rejects a confirmed finding with no evidence.
 - **Replay.** A run plays back in seconds, with a clock, and stops where it broke.
 - **Search** (`/` or ⌘K) across names, files, flows and examples.

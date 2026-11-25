@@ -38,6 +38,17 @@ Tudo o que o quadro mostra vem deste arquivo. O gerador (`scripts/build.py`) rec
 - Contagens que já estão nos dados do projeto podem ir em `metrics`, com a origem e a data em `when`.
 - `ask: false` esconde a pergunta em linguagem natural. Ela só aparece quando a página é um artefato com a capacidade `sample`.
 
+## Cadastro e ícones próprios
+
+```json
+"catalog": {"title": "Fontes cadastradas", "note": "retrato de 25/11", "types": {"github": "GitHub"},
+  "items": [["github", "Nome da organização", "id", "conta", "https://github.com/conta"]],
+  "form": {"repo": "dono/nome", "titlePrefix": "[fonte]", "types": {"github": ["Conta do GitHub", "nome da conta"]}, "footer": "texto no fim do pedido", "note": "o que acontece depois", "owners": [["id", "Nome"]]}},
+"icons": {"marca": "data:image/svg+xml;base64,…"}
+```
+
+O cadastro ganha botão, busca, filtro por tipo e, com `form`, um formulário que abre uma issue já preenchida (`tipo:`, `org:`, `valor:`). Quem envia é a pessoa. Uma etapa com `"catalog": "tipo"` abre o cadastro filtrado em vez do painel. Os registros do cadastro são dados do projeto: confira antes de compartilhar.
+
 ## Sem tempo medido
 
 Etapa que veio só da leitura do código leva `"meta": "lido no código"` e nenhum `seconds`. Sem medição não há `runs`. Para medir, use `scripts/trace.py` (`run` grava, `spec --merge` junta).

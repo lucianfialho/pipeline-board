@@ -10,6 +10,7 @@ import argparse
 import base64
 import json
 import pathlib
+import re
 import sys
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
@@ -42,6 +43,24 @@ def conferir(spec):
         if r.get("seconds") and len(r["seconds"]) != len(r["steps"]):
             erros.append(f"execução '{r['label']}': 'seconds' precisa ter um valor por etapa")
     erros += conferir_falhas(spec.get("findings", []), etapas)
+    erros += conferir_extras(spec)
+    return erros
+
+
+def conferir_extras(spec):
+    erros = []
+    cat = spec.get("catalog")
+    if cat is not None:
+        itens = cat.get("items") if isinstance(cat, dict) else None
+        if not isinstance(itens, list) or not all(isinstance(i, list) and len(i) in (4, 5) and all(isinstance(x, str) for x in i) for i in itens):
+            erros.append("catalog.items precisa ser uma lista de [tipo, dono, id do dono, valor, endereço opcional], tudo texto")
+        form = cat.get("form") if isinstance(cat, dict) else None
+        if form and not (re.fullmatch(r"[\w.-]+/[\w.-]+", str(form.get("repo", ""))) and isinstance(form.get("types"), dict) and form["types"]
+                         and all(isinstance(v, list) and v for v in form["types"].values())):
+            erros.append("catalog.form precisa de 'repo' (dono/nome) e 'types' {tipo: [rótulo, exemplo]}")
+    for nome, dado in (spec.get("icons") or {}).items():
+        if not re.fullmatch(r"data:image/(svg\+xml|png);base64,[A-Za-z0-9+/=]+", str(dado)):
+            erros.append(f"ícone '{nome}': use data:image/svg+xml;base64 ou data:image/png;base64")
     return erros
 
 
@@ -77,6 +96,8 @@ def montar(spec, raiz=RAIZ, artefato=False):
         raise ValueError("\n".join(erros))
     icones = {p.stem: "data:image/svg+xml;base64," + base64.b64encode(p.read_bytes()).decode() for p in sorted((raiz / "assets" / "icons").glob("*.svg"))}
     usados = {s.get("icon") for c in spec["cards"] for s in c["steps"]} | {"file"}
+    icones.update(spec.get("icons") or {})
+    spec = {k: v for k, v in spec.items() if k != "icons"}
     js = (raiz / "assets" / "board.js").read_text()
     # os ícones entram antes: assim um texto da descrição nunca é tratado como marcador
     js = js.replace("__ICONS__", seguro({k: v for k, v in icones.items() if k in usados}), 1).replace("__SPEC__", seguro(spec), 1)

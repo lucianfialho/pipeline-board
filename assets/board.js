@@ -12,6 +12,7 @@ const clock = s => { const m = Math.floor(s / 60); return (m >= 60 ? Math.floor(
 const T = Object.assign({ search: "Buscar etapas…  ( / )", report: "Relatório", limits: "Limites", fit: "Arrumar", pause: "Pausar", resume: "Continuar", exit: "Sair", follow: "seguir",
   copy: "Copiar contexto", copied: "✓ Copiado", close: "Fechar ✕", prev: "← Anterior", next: "Próxima →", full: "Tela cheia", side: "Voltar ao lado",
   findings: "Falhas", confirmed: "Confirmadas", suspected: "Suspeitas, não confirmadas", evidence: "Evidência", fix: "Correção sugerida", openStep: "Abrir etapa", high: "alta", medium: "média", low: "baixa",
+  catalog: "Fontes cadastradas", catalogAdd: "adicionar", catalogSearch: "Buscar por organização, conta ou endereço…", catalogAll: "Todas", more: "Mostrar mais", addTitle: "Adicionar uma fonte", addType: "Tipo", addOrg: "Organização", addValue: "Conta ou endereço", addSend: "Abrir pedido no GitHub ↗",
   input: "Entra", output: "Sai", recent: "Últimos registros", case: "Caso real", step: "etapa", of: "de", askPh: "Pergunte sobre esta etapa…", ask: "Perguntar" }, SPEC.labels || {});
 
 const STEPS = {}, ORDER = [], CARDOF = {};
@@ -36,7 +37,7 @@ SPEC.cards.forEach(c => {
   const f = btn("⌖", () => flyTo(c.id), "focus"); f.setAttribute("aria-label", "Aproximar " + c.title); head.append(t, f);
   const list = $("div", "steps");
   c.steps.forEach(s => {
-    const b = btn(null, () => openStep(s.id), "step" + (s.status === "failed" ? " bad" : ""));
+    const b = btn(null, () => (s.catalog != null && SPEC.catalog ? openCatalog("", s.catalog) : openStep(s.id)), "step" + (s.status === "failed" ? " bad" : ""));
     b.dataset.step = s.id;
     const ic = $("span", "ic"), img = $("img"); img.src = ICONS[s.icon] || ICONS.file; img.alt = ""; img.draggable = false; ic.append(img);
     const tx = $("span", "tx"); tx.append($("b", null, s.name), $("small", null, [dur(s.seconds), s.meta].filter(Boolean).join(" · ")));
@@ -164,6 +165,8 @@ function contextOf(id) {
   findingsOf(id).forEach(f => L.push("", findingText(f)));
   return L.filter((l, i) => l !== "" || L[i - 1] !== "").join("\n").trim();
 }
+// o texto copiado de uma falha começa com o comando que a investiga; "fixCommand": false tira a linha
+const FIX = SPEC.fixCommand === false ? "" : SPEC.fixCommand || "/pipeline-board:fix";
 const findingText = f => [`### ${f.status === "confirmed" ? "Confirmed problem" : "Suspected problem (not confirmed)"} [${f.severity}]: ${f.title}`, f.file ? "Code: " + f.file : "", f.detail || "", f.evidence ? "Evidence: " + f.evidence : "", f.fix ? "Suggested fix: " + f.fix : ""].filter(Boolean).join("\n");
 function findingBox(f, withStep) {
   const sec = $("section", "finding " + f.status), top = $("div", "top");
@@ -171,7 +174,7 @@ function findingBox(f, withStep) {
   if (f.file) sec.append($("p", "meta", f.file));
   if (f.detail) sec.append($("p", "note", f.detail));
   for (const [k, v] of [[T.evidence, f.evidence], [T.fix, f.fix]]) if (v) { const p = $("p", "note"); p.append($("b", null, k + ": "), v); sec.append(p); }
-  const row = $("div", "chips"), cp = btn(T.copy, () => copyText(`## ${SPEC.title}\n${findingText(f)}`, cp), "copy"); row.append(cp);
+  const row = $("div", "chips"), cp = btn(T.copy, () => copyText([FIX, `## ${SPEC.title}`, findingText(f)].filter(Boolean).join("\n"), cp), "copy"); row.append(cp);
   if (withStep && STEPS[f.step]) row.append(btn(T.openStep + ": " + STEPS[f.step].name, () => { openStep(f.step); flyTo(CARDOF[f.step]); }));
   sec.append(row); return sec;
 }
@@ -229,6 +232,49 @@ function openLimits() {
   });
 }
 
+// ---------- cadastro: o que o pipeline lê, com busca, e o pedido de uma entrada nova como issue do GitHub ----------
+const CAT = SPEC.catalog || null;
+const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+const catType = k => (CAT && CAT.types && own(CAT.types, k) ? CAT.types[k] : k);
+// item: [tipo, nome do dono, id do dono, valor, endereço opcional]
+const ROWS = CAT ? CAT.items.map(([type, owner, ownerId, value, url]) => ({ type, owner, ownerId, value, url, key: flat([owner, ownerId, value, catType(type)].join(" ")) })) : [];
+const catFind = (q, type) => { const terms = flat(q).split(/\s+/).filter(Boolean); return ROWS.filter(r => (!type || r.type === type) && terms.every(t => r.key.includes(t))); };
+function issueForm(form) {
+  const box = $("section", "askbox"), f = $("div", "fields"), status = $("p", "note"), send = link(T.addSend, "https://github.com/");
+  const field = (label, el) => { const l = $("label"); l.append($("span", null, label), el); return l; };
+  const sel = $("select"); Object.entries(form.types).forEach(([k, v]) => { const o = $("option", null, v[0]); o.value = k; sel.append(o); });
+  const owners = new Map(ROWS.map(r => [r.ownerId, r.owner])); (form.owners || []).forEach(([id, name]) => owners.set(id, name));
+  const org = $("input"), list = $("datalist"), value = $("input"); list.id = "cat-owners"; owners.forEach((name, id) => { const o = $("option", null, name); o.value = id; list.append(o); });
+  org.setAttribute("list", list.id); org.autocomplete = "off"; value.autocomplete = "off"; value.spellcheck = false; send.className = "send"; send.hidden = true;
+  const check = () => {
+    value.placeholder = form.types[sel.value][1] || "";
+    const o = org.value.trim(), v = value.value.trim(); let error = "";
+    if (o && !owners.has(o)) error = "Escolha uma organização da lista."; else if (/\s/.test(v)) error = "O valor não pode ter espaços.";
+    else { const dup = v && ROWS.find(r => r.type === sel.value && flat(r.value).replace(/\/$/, "") === flat(v).replace(/\/$/, "")); if (dup) error = "Já está cadastrada em " + dup.owner + "."; }
+    status.textContent = error; send.hidden = !!error || !o || !v;
+    if (!send.hidden) send.href = `https://github.com/${form.repo}/issues/new?title=${encodeURIComponent(`${form.titlePrefix || ""} ${form.types[sel.value][0]}: ${owners.get(o)}`.trim())}&body=${encodeURIComponent(`tipo: ${sel.value}\norg: ${o}\nvalor: ${v}\n\n${form.footer || ""}`)}`;
+  };
+  sel.onchange = org.oninput = value.oninput = check; check();
+  f.append(field(T.addType, sel), field(T.addOrg, org), field(T.addValue, value), list);
+  box.append($("h4", null, T.addTitle), f, status, send); if (form.note) box.append($("p", "note", form.note));
+  return box;
+}
+function openCatalog(query = "", type = "") {
+  showPanel(CAT.title || T.catalog, `${ROWS.length.toLocaleString()} · ${CAT.note || ""}`);
+  const filter = $("input", "find"), chips = $("div", "chips"), total = $("p", "meta"), ul = $("ul", "list"); let current = type, shown = 30;
+  filter.type = "search"; filter.placeholder = T.catalogSearch; filter.setAttribute("aria-label", T.catalogSearch); filter.value = query; total.setAttribute("aria-live", "polite");
+  const paint = () => {
+    const rows = catFind(filter.value, current); total.textContent = rows.length.toLocaleString(); ul.textContent = "";
+    rows.slice(0, shown).forEach(r => { const li = $("li"); li.append($("b", null, r.owner), $("span", null, catType(r.type)), link(r.value, r.url || r.value)); ul.append(li); });
+    if (rows.length > shown) { const li = $("li"); li.append(btn(T.more, () => { shown += 60; paint(); }, "more")); ul.append(li); }
+    chips.querySelectorAll("button").forEach(c => c.setAttribute("aria-pressed", String(c.dataset.type === current)));
+  };
+  [["", T.catalogAll], ...[...new Set(ROWS.map(r => r.type))].map(k => [k, catType(k)])].forEach(([k, label]) => { const c = btn(`${label} ${(k ? ROWS.filter(r => r.type === k).length : ROWS.length).toLocaleString()}`, () => { current = k; shown = 30; paint(); }); c.dataset.type = k; chips.append(c); });
+  filter.oninput = () => { shown = 30; paint(); };
+  body.append(filter, chips, total, ul); if (CAT.form && /^[\w.-]+\/[\w.-]+$/.test(CAT.form.repo || "")) body.append(issueForm(CAT.form));
+  paint();
+}
+
 // ---------- perguntar: o modelo escolhe os blocos; os dados vêm só de SPEC ----------
 let sampler = null;
 const sampling = window.claude && window.claude.use ? window.claude.use("sample").then(s => { sampler = s || null; }).catch(() => {}) : Promise.resolve();
@@ -276,9 +322,11 @@ function search() {
   hits = terms.length ? INDEX.filter(([, t]) => terms.every(x => t.includes(x))).map(([i]) => i) : [];
   document.body.classList.toggle("searching", hits.length > 0);
   ORDER.forEach(i => tiles[i].classList.toggle("hit", hits.includes(i)));
+  if (catB) { const n = terms.length ? catFind(find.value, "").length : 0; catB.textContent = n ? `${n.toLocaleString()} · ${CAT.title || T.catalog}` : `${CAT.title || T.catalog} · ${T.catalogAdd}`; catB.classList.toggle("alert", n > 0); catB.onclick = () => openCatalog(n ? find.value : "", ""); }
 }
+const catB = CAT ? btn(`${CAT.title || T.catalog} · ${T.catalogAdd}`) : null; if (catB) catB.onclick = () => openCatalog("", "");
 find.addEventListener("input", search);
-find.addEventListener("keydown", ev => { if (ev.key === "Enter" && hits.length) { openStep(hits[0]); flyTo(CARDOF[hits[0]]); } else if (ev.key === "Escape") { ev.stopPropagation(); find.value = ""; search(); find.blur(); } });
+find.addEventListener("keydown", ev => { if (ev.key === "Enter" && hits.length) { openStep(hits[0]); flyTo(CARDOF[hits[0]]); } else if (ev.key === "Enter" && catB && catFind(find.value, "").length) { openCatalog(find.value, ""); } else if (ev.key === "Escape") { ev.stopPropagation(); find.value = ""; search(); find.blur(); } });
 
 const info = float("f-info"), tClock = $("strong"), tText = $("span"), tSub = $("span", "meta"), tBar = $("i"); info.append(tClock, tText, tSub, tBar); info.hidden = true; tText.setAttribute("aria-live", "polite");
 let run = null, frame = null, speed = 60, follow = true;
@@ -313,6 +361,7 @@ function tick(now) {
 const pauseB = btn(T.pause, () => { if (!run) return; run.paused = !run.paused; pauseB.textContent = run.paused ? T.resume : T.pause; if (!run.paused) { run.last = null; frame = requestAnimationFrame(tick); } });
 const exitB = btn(T.exit, () => { clearRun(); fitAll(); }); pauseB.hidden = exitB.hidden = true; top.append(pauseB, exitB);
 if ((SPEC.runs || []).length) { const l = $("label"), cb = $("input"); cb.type = "checkbox"; cb.checked = true; cb.onchange = () => { follow = cb.checked; }; l.append(cb, " " + T.follow); top.append(l); }
+if (catB) top.append(catB);
 top.append(btn(T.report, openReport));
 if (FINDINGS.length) { const n = FINDINGS.filter(f => f.status === "confirmed").length; top.append(btn(`${T.findings} · ${n} ▲ ${FINDINGS.length - n} ?`, openFindings, n ? "alert" : "")); }
 if ((SPEC.limits || []).length) { const n = SPEC.limits.filter(l => ["warn", "crit"].includes(state(l)[0])).length; top.append(btn(T.limits + (n ? ` · ${n} ▲` : ""), openLimits, n ? "alert" : "")); }
@@ -332,5 +381,5 @@ addEventListener("resize", () => { if (!at) fitAll(true); });
 const fromHash = () => { const m = /^#step-(.+)$/.exec(location.hash); if (m && STEPS[m[1]]) openStep(m[1], true); };
 addEventListener("hashchange", fromHash); sampling.then(fromHash);
 // para testes e para gravar a demonstração
-window.pipelineBoard = { openStep, closePanel, flyTo, fitAll, play, openLimits, openReport, openFindings, contextOf, cards, tiles, steps: STEPS };
+window.pipelineBoard = { openCatalog: CAT ? openCatalog : null, openStep, closePanel, flyTo, fitAll, play, openLimits, openReport, openFindings, contextOf, cards, tiles, steps: STEPS };
 })();

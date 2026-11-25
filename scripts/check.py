@@ -12,14 +12,15 @@ import re
 import sys
 
 PADROES = {
-    "chave ou token": r"\b(sk-[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|xox[abprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{30,})",
+    "chave ou token": r"\b(sk-[A-Za-z0-9_-]*?[A-Za-z0-9]{16,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|xox[abprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{30,})",
     "token em cabeçalho": r"(?i)\bbearer\s+[A-Za-z0-9._-]{16,}",
     "chave privada": r"-----BEGIN [A-Z ]*PRIVATE KEY-----",
     "endereço com senha": r"[a-z][a-z0-9+.-]*://[^/\s:\"]+:[^@\s\"]+@",
     "referência de cofre": r"op://[^\s\"]+",
     # "logo@2x.png" é nome de imagem, não e-mail
     "e-mail": r"[A-Za-z0-9._%+-]+@(?!\dx\.(?:png|jpe?g|webp|gif|svg)\b)[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+",
-    "pasta pessoal": r"(/Users|/home)/[A-Za-z0-9._-]+",
+    # "site.br/modulo/home/index.php" é endereço, não pasta: antes da barra não pode vir letra nem número
+    "pasta pessoal": r"(?<![A-Za-z0-9])(/Users|/home)/[A-Za-z0-9._-]+",
 }
 
 

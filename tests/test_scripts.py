@@ -31,6 +31,16 @@ class Montagem(unittest.TestCase):
         self.assertIn("severity", erros(evidence="a", severity="enorme"))
         self.assertIn("status", erros(status="talvez"))
 
+    def test_cadastro_e_icones_so_no_formato_esperado(self):
+        erros = lambda **k: " | ".join(build.conferir({**SPEC, **k}))
+        bom = {"items": [["g", "Org", "org", "conta"]], "form": {"repo": "o/r", "types": {"g": ["Conta", ""]}}}
+        self.assertEqual(erros(catalog=bom), "")
+        self.assertIn("catalog.items", erros(catalog={"items": [["g", "Org", 3, "x"]]}))
+        self.assertIn("catalog.form", erros(catalog={**bom, "form": {"repo": "o/r?x=1", "types": {"g": ["a"]}}}))
+        self.assertIn("ícone", erros(icons={"x": "https://mal.example/i.svg"}))
+        html = build.montar({**SPEC, "icons": {"marca": "data:image/png;base64,AAAA"}, "cards": [{"id": "a", "title": "A", "steps": [{"id": "x", "name": "X", "icon": "marca"}]}]})
+        self.assertEqual(html.count("data:image/png;base64,AAAA"), 1)
+
     def test_texto_de_log_nao_fecha_o_script(self):
         veneno = "</script><img src=x onerror=alert(1)> __SPEC__ __ICONS__"
         spec = {"title": veneno, "cards": [{"id": "a", "title": veneno, "steps": [{"id": "x", "name": veneno}]}]}
@@ -56,6 +66,12 @@ class Trava(unittest.TestCase):
         self.assertEqual(sorted(t for t, _ in achados), ["chave ou token", "e-mail", "pasta pessoal"])
         self.assertFalse(any(chave in trecho for _, trecho in achados))
         self.assertEqual(check.procurar('{"file":"jobs/orders.py","url":"https://example.org/a@2x.png"}'), [])
+
+    def test_nome_de_empresa_e_endereco_de_site_nao_travam(self):
+        self.assertEqual(check.procurar('["sk-hynix-south-korea","sk-group-south-korea","http://u.br/modulo/home/index.php"]'), [])
+        for chave in ("sk-or-v1-" + "0a" * 24, "sk-ant-api03-" + "Ab1" * 12, "sk-proj-" + "x9" * 20):
+            self.assertEqual([t for t, _ in check.procurar(f'"{chave}"')], ["chave ou token"], chave[:8])
+        self.assertEqual([t for t, _ in check.procurar('"em /home/fulano/x"')], ["pasta pessoal"])
 
 
 class Coleta(unittest.TestCase):
