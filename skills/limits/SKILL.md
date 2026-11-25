@@ -5,6 +5,8 @@ description: Measures how close a pipeline is to its limits (GitHub Actions usag
 
 # Limites
 
+O script abaixo só lê o GitHub Actions. Em projeto sem ele, não rode o script: escreva `limits` à mão.
+
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/limits.py" dono/repo --spec spec.json --timeouts .github/workflows
 ```

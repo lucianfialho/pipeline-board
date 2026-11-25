@@ -2,7 +2,7 @@
 
 # pipeline-board
 
-**See, understand and speed up your pipeline.** A plugin for **Claude Code** that turns your real runs into an interactive board and publishes it to **your own artifact**.
+**See, understand and speed up your pipeline.** A plugin for **Claude Code** that turns your project into an interactive board and publishes it to **your own artifact**.
 
 ![Works with Claude Code](https://img.shields.io/badge/works%20with-Claude%20Code-d97757)
 
@@ -37,10 +37,31 @@ The skill instructions are written in Portuguese. They tell Claude to answer in 
 
 | Skill | Ask when | What it does |
 |---|---|---|
-| `/pipeline-board:map` | "draw my pipeline" | Reads GitHub Actions runs, groups them into cards, scans for secrets and publishes to your artifact |
+| `/pipeline-board:map` | "draw my pipeline" | Reads GitHub Actions runs or your code, groups steps into cards, scans for secrets and publishes to your artifact |
 | `/pipeline-board:explain` | "what does this step do?" | Reads your code and fills in the flow, measurements, **real examples**, latest records and models used |
 | `/pipeline-board:speedup` | "this is slow" or "this broke" | Finds the actual bottleneck, parallelizes in code and **measures before and after** |
 | `/pipeline-board:limits` | "how close are we to a limit?" | CI minutes, job timeout, cache and files per deploy |
+
+## Any project
+
+The board only needs cards, steps and connections, described in `spec.json`. There are three ways to fill it in, and they can be combined:
+
+| Source | Works with | You get |
+|---|---|---|
+| `collect.py` | GitHub Actions | Steps, durations and failures, collected automatically |
+| Claude reading your code | Cron, Makefiles, scripts, orchestrators, apps, bots, agents | Structure and flow, marked as read from code, with no durations |
+| `trace.py` | Anything that runs as a command, in any language or CI | Measured durations, exit codes and replay |
+
+```bash
+export PIPELINE_RUN=$(date +%Y-%m-%dT%H:%M:%S)   # steps sharing this value are one run
+python3 trace.py run "download data" --group "Ingest" -- python3 download.py
+python3 trace.py spec trace.jsonl -o spec.json                      # board from the recording
+python3 trace.py spec trace.jsonl -o spec.json --merge spec.json    # add timings to a board you already have
+```
+
+`trace.py` is a single file using only the standard library. It passes output and exit code through, and it does not record command arguments or output. Step and group names are recorded. It measures commands: phases inside one process need to be split into separate commands. Replay plays steps one at a time, so for steps that ran in parallel its clock shows the sum of their durations, not the elapsed time.
+
+A board built only from reading code can be wrong, especially for calls decided at runtime.
 
 ## What the board does
 
@@ -77,7 +98,9 @@ The spec format is described in [references/spec.md](references/spec.md) (in Por
 
 ## Limitations in this version
 
-- Automatic collection covers **GitHub Actions only**, using the latest run of each workflow. For other orchestrators the spec has to be written by hand.
+- Automatic collection from a provider covers **GitHub Actions only**, using the latest run of each workflow. There are no importers for GitLab, Airflow or others: use `trace.py`, or let Claude write the spec from the code.
+- `limits.py` reads GitHub Actions only. Other limits are added to the spec by hand.
+- Mapping apps, bots and agents has not been tested yet.
 - The automatic draft has steps, durations and results. **Flows and real examples come from the `explain` skill**, which reads your code.
 - The board is a snapshot. It does not update live.
 - Tested in desktop Chrome. Phones and other browsers have not been tested.

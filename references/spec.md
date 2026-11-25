@@ -31,6 +31,10 @@ Tudo o que o quadro mostra vem deste arquivo. O gerador (`scripts/build.py`) rec
 - `tone: "warn"` marca o cartão com problema.
 - `ask: false` esconde a pergunta em linguagem natural. Ela só aparece quando a página é um artefato com a capacidade `sample`.
 
+## Sem tempo medido
+
+Etapa que veio só da leitura do código leva `"meta": "lido no código"` e nenhum `seconds`. Sem medição não há `runs`. Para medir, use `scripts/trace.py` (`run` grava, `spec --merge` junta).
+
 ## Regras de conteúdo
 
 1. **Número só com origem.** Tempo, volume e taxa vêm de uma execução, de um log ou de um arquivo. Estimativa leva a palavra "estimativa" na nota. Sem dado, deixe de fora.
