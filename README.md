@@ -23,7 +23,7 @@ Inside Claude Code:
 /plugin install pipeline-board@pipeline-board
 ```
 
-This repository is private, so you need access to it on GitHub. To try a local copy for one session: `claude --plugin-dir <folder>`.
+To try a local copy for one session: `claude --plugin-dir <folder>`.
 
 Requirements: Python 3.9+ and, to read your runs, an authenticated [`gh`](https://cli.github.com/) CLI. Publishing to an artifact needs a Claude account where artifacts are available. The scripts also work without it and produce a local HTML file.
 
